@@ -27,6 +27,7 @@ io.sockets.on 'connection', (socket) ->
     postData = {
       record:{
         value:weight,
+        sensor_id: 1,
         transmitter_token:"5goPJ6bV-rSrkop7j4pmBg",
         pin_number:"a0"}
     }
@@ -36,10 +37,10 @@ io.sockets.on 'connection', (socket) ->
       json: true,
       url: recordsUrl
     }
-    request options, (error, res, body) ->
-      if (!error && res.statusCode== 201)
-        console.log(body)
-        io.sockets.emit 'test', body
+    io.sockets.emit 'test', postData
+    #request options, (error, res, body) ->
+    #if (!error && res.statusCode== 201)
+    #console.log(body)
 
   socket.on 'comeback', (data) ->
     console.log(data)
