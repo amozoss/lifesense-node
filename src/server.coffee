@@ -1,49 +1,45 @@
-http
-
 express = require('express')
 app = express()
 bodyParser = require('body-parser')
 http = require('http')
 server = http.createServer(app)
+request = require('request')
+
 io = require('socket.io').listen(server)
 
-app.use(bodyParser())
 
-server.listen(process.env.PORT || 3507)
-console.log("Listening on port 3507")
+app.use(bodyParser.urlencoded({
+  extended: true
+}))
+app.use(bodyParser.json())
+
+recordsUrl = 'http://localhost:3000/api/records'
+server.listen(process.env.PORT || 4033)
+console.log("Listening on port 4033")
 
 
 io.sockets.on 'connection', (socket) ->
   console.log("WE have a connection yo")
 
-  setTimeout(->
-    socket.emit 'test', { record: {
-      id:153
-      time_stamp:1418111217000
-      sensor_id: 1
-      value: 500}
+  app.post '/scale', (req, res)->
+    console.log("post" + req.connection.remoteAddress)
+    weight = req.body["weight"]
+    postData = {
+      record:{
+        value:weight,
+        transmitter_token:"5goPJ6bV-rSrkop7j4pmBg",
+        pin_number:"a0"}
     }
-  , 1000)
-
-  setTimeout(->
-    socket.emit 'test', { record: {
-      id:154
-      time_stamp: 1419111217000
-      sensor_id: 1
-      value: 1000}
+    options = {
+      method: 'post',
+      body:postData,
+      json: true,
+      url: recordsUrl
     }
-  , 3000)
-
-  setTimeout(->
-    socket.emit 'test', { record: {
-      id:155
-      time_stamp: 1420111217000
-      sensor_id: 1
-      value: 1500}
-    }
-  , 6000)
-
-
+    request options, (error, res, body) ->
+      if (!error && res.statusCode== 201)
+        console.log(body)
+        io.sockets.emit 'test', body
 
   socket.on 'comeback', (data) ->
     console.log(data)

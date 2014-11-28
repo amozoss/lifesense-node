@@ -6,7 +6,8 @@
     "socket.io": "~1.0.6",
     "coffee-script": "^1.7.1",
     "express": "",
-    "body-parser": ""
+    "body-parser": "",
+    "request": "~2.48.0"
   },
   "scripts": {
     "postinstall": "cake build",
