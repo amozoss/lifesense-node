@@ -20,12 +20,24 @@ recordsUrl = 'http://localhost:3000/api/records'
 server.listen(process.env.PORT || 4033)
 console.log("Listening on port 4033")
 
+sleep = (delay)->
+  start = (new Date).getTime()
+  i = 0
+  while (new Date().getTime() < (start + delay))
+    i = 1
+
 
 io.sockets.on 'connection', (socket) ->
   console.log("WE have a connection yo")
 
+
+  #while true
+  console.log('emit')
+  #sleep(3000)
+
   app.post '/scale', (req, res)->
     console.log("post" + req.connection.remoteAddress)
+    console.log(req.body)
     weight = req.body["weight"]
     postData = {
       record:{
@@ -40,9 +52,9 @@ io.sockets.on 'connection', (socket) ->
       json: true,
       url: recordsUrl
     }
-    io.sockets.emit 'test', postData
-    res.send(red + blue + green + '\n')
-    res.end
+    io.sockets.emit 'live', req.body
+    #res.send(red + blue + green + '\n')
+    #res.end
     #request options, (error, res, body) ->
     #if (!error && res.statusCode== 201)
     #console.log(body)
