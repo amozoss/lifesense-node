@@ -8,6 +8,9 @@ request = require('request')
 io = require('socket.io').listen(server)
 
 
+red = 'RED OFF'
+blue = 'BLUE OFF'
+green = 'GREEN OFF'
 app.use(bodyParser.urlencoded({
   extended: true
 }))
@@ -38,11 +41,25 @@ io.sockets.on 'connection', (socket) ->
       url: recordsUrl
     }
     io.sockets.emit 'test', postData
+    res.send(red + blue + green + '\n')
+    res.end
     #request options, (error, res, body) ->
     #if (!error && res.statusCode== 201)
     #console.log(body)
 
-  socket.on 'comeback', (data) ->
+  socket.on 'led', (data) ->
     console.log(data)
+    if data.red
+      red = 'RED ON'
+    else 
+      red = 'RED OFF'
+    if data.blue
+      blue = 'BLUE ON'
+    else 
+      blue = 'BLUE OFF'
+    if data.green
+      green = 'GREEN ON'
+    else 
+      green = 'GREEN OFF'
 
 
