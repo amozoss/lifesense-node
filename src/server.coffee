@@ -7,10 +7,8 @@ request = require('request')
 
 io = require('socket.io').listen(server)
 
+leds = {}
 
-red = 'RED OFF'
-blue = 'BLUE OFF'
-green = 'GREEN OFF'
 app.use(bodyParser.urlencoded({
   extended: true
 }))
@@ -20,23 +18,16 @@ recordsUrl = 'http://localhost:3000/api/records'
 server.listen(process.env.PORT || 4033)
 console.log("Listening on port 4033")
 
-sleep = (delay)->
-  start = (new Date).getTime()
-  i = 0
-  while (new Date().getTime() < (start + delay))
-    i = 1
-
+getTransToken = (data)->
+  transToken = 'T' + data.transmitter_token # always being with a letter
 
 io.sockets.on 'connection', (socket) ->
   console.log("WE have a connection yo")
 
 
-  #while true
-  console.log('emit')
-  #sleep(3000)
 
   app.post '/scale', (req, res)->
-    console.log("post" + req.connection.remoteAddress)
+    #console.log("post" + req.connection.remoteAddress)
     console.log(req.body)
     weight = req.body["weight"]
     postData = {
@@ -53,25 +44,29 @@ io.sockets.on 'connection', (socket) ->
       url: recordsUrl
     }
     io.sockets.emit 'live', req.body
-    #res.send(red + blue + green + '\n')
-    #res.end
+    token = getTransToken req.body
+    res.send(leds[token])
+    res.end
     #request options, (error, res, body) ->
     #if (!error && res.statusCode== 201)
     #console.log(body)
+    
+  socket.on 'get_leds', (data) ->
+    console.log("GET LEDS")
+    transToken = getTransToken(data)
+    socket.emit 'leds', {transmitter_token: data.transmitter_token , leds: leds[transToken]}
 
   socket.on 'led', (data) ->
-    console.log(data)
-    if data.red
-      red = 'RED ON'
+    transToken = getTransToken(data)
+    transmitter =leds[transToken]
+    if typeof transmitter == 'undefined'
+      leds[transToken] = {}
+      transmitter =leds[transToken]
+      transmitter[data.pin_name] = data.value
     else 
-      red = 'RED OFF'
-    if data.blue
-      blue = 'BLUE ON'
-    else 
-      blue = 'BLUE OFF'
-    if data.green
-      green = 'GREEN ON'
-    else 
-      green = 'GREEN OFF'
+      transmitter[data.pin_name] = data.value
+    io.sockets.emit 'leds', {transmitter_token: data.transmitter_token , leds: leds[transToken]}
+
+
 
 
