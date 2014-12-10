@@ -26,7 +26,6 @@ io.sockets.on 'connection', (socket) ->
 
   app.post '/scale', (req, res)->
     #console.log("post" + req.connection.remoteAddress)
-    weight = req.body["weight"]
     postData = {
       record:{
         y: req.body["A0"],
@@ -39,6 +38,8 @@ io.sockets.on 'connection', (socket) ->
       json: true,
       url: recordsUrl
     }
+    console.log "scale post"
+    console.log req.body
     io.sockets.emit 'live', req.body
     token = getTransToken req.body
     console.log leds[token]
