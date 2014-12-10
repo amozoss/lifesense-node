@@ -19,23 +19,19 @@ server.listen(process.env.PORT || 4033)
 console.log("Listening on port 4033")
 
 getTransToken = (data)->
-  transToken = 'T' + data.transmitter_token # always being with a letter
+  transToken = data.transmitter_token # always being with a letter
 
 io.sockets.on 'connection', (socket) ->
   console.log("WE have a connection yo")
 
-
-
   app.post '/scale', (req, res)->
     #console.log("post" + req.connection.remoteAddress)
-    console.log(req.body)
     weight = req.body["weight"]
     postData = {
       record:{
-        value:weight,
-        sensor_id: 1,
-        transmitter_token:"5goPJ6bV-rSrkop7j4pmBg",
-        pin_number:"a0"}
+        y: req.body["A0"],
+        transmitter_token: req.body.transmitter_token
+        pin_number:"A0"}
     }
     options = {
       method: 'post',
@@ -45,6 +41,7 @@ io.sockets.on 'connection', (socket) ->
     }
     io.sockets.emit 'live', req.body
     token = getTransToken req.body
+    console.log leds[token]
     res.send(leds[token])
     res.end
     #request options, (error, res, body) ->
@@ -53,10 +50,10 @@ io.sockets.on 'connection', (socket) ->
     
   socket.on 'get_leds', (data) ->
     console.log("GET LEDS")
-    transToken = getTransToken(data)
-    socket.emit 'leds', {transmitter_token: data.transmitter_token , leds: leds[transToken]}
+    socket.emit 'leds', leds
 
   socket.on 'led', (data) ->
+    console.log data
     transToken = getTransToken(data)
     transmitter =leds[transToken]
     if typeof transmitter == 'undefined'
@@ -65,7 +62,9 @@ io.sockets.on 'connection', (socket) ->
       transmitter[data.pin_name] = data.value
     else 
       transmitter[data.pin_name] = data.value
-    io.sockets.emit 'leds', {transmitter_token: data.transmitter_token , leds: leds[transToken]}
+    data = {}
+    data[transToken] = transmitter
+    io.sockets.emit 'leds', data
 
 
 
