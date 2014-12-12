@@ -8,6 +8,7 @@ request = require('request')
 io = require('socket.io').listen(server)
 
 leds = {}
+sensors = {}
 
 app.use(bodyParser.urlencoded({
   extended: true
@@ -24,13 +25,15 @@ getTransToken = (data)->
 io.sockets.on 'connection', (socket) ->
   console.log("WE have a connection yo")
 
-  app.post '/scale', (req, res)->
-    #console.log("post" + req.connection.remoteAddress)
+  app.post '/value', (req, res)->
+    transToken = req.body.transmitter_token
+    pin = req.body.pin
+    y = sensors[transToken][pin]
     postData = {
       record:{
-        y: req.body["A0"],
-        transmitter_token: req.body.transmitter_token
-        pin_number:"A0"}
+        y: y
+        transmitter_token: transToken
+        pin_number:pin}
     }
     options = {
       method: 'post',
@@ -38,23 +41,25 @@ io.sockets.on 'connection', (socket) ->
       json: true,
       url: recordsUrl
     }
-    console.log "scale post"
+    request options, (error, res, body) ->
+      if (!error && res.statusCode== 201)
+        console.log(body)
+    
+
+  app.post '/scale', (req, res)->
+    #console.log("post" + req.connection.remoteAddress)
+    sensors[req.body.transmitter_token] = req.body
     console.log req.body
     io.sockets.emit 'live', req.body
     token = getTransToken req.body
-    console.log leds[token]
     res.send(leds[token])
     res.end
-    #request options, (error, res, body) ->
-    #if (!error && res.statusCode== 201)
-    #console.log(body)
     
   socket.on 'get_leds', (data) ->
     console.log("GET LEDS")
     socket.emit 'leds', leds
 
   socket.on 'led', (data) ->
-    console.log data
     transToken = getTransToken(data)
     transmitter =leds[transToken]
     if typeof transmitter == 'undefined'
