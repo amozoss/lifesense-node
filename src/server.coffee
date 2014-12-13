@@ -22,34 +22,37 @@ console.log("Listening on port 4033")
 getTransToken = (data)->
   transToken = data.transmitter_token # always being with a letter
 
+sendToRails = (transToken, pin) ->
+  y = sensors[transToken][pin]
+  postData = {
+    record:{
+      y: y
+      transmitter_token: transToken
+      pin_number:pin}
+  }
+  options = {
+    method: 'post',
+    body:postData,
+    json: true,
+    url: recordsUrl
+  }
+  request options, (error, res, body) ->
+    if (!error && res.statusCode== 201)
+      console.log(body)
+
+
 io.sockets.on 'connection', (socket) ->
   console.log("WE have a connection yo")
 
   app.post '/value', (req, res)->
     transToken = req.body.transmitter_token
     pin = req.body.pin
-    y = sensors[transToken][pin]
-    postData = {
-      record:{
-        y: y
-        transmitter_token: transToken
-        pin_number:pin}
-    }
-    options = {
-      method: 'post',
-      body:postData,
-      json: true,
-      url: recordsUrl
-    }
-    request options, (error, res, body) ->
-      if (!error && res.statusCode== 201)
-        console.log(body)
+    sendToRails(transToken, pin)
     
 
   app.post '/scale', (req, res)->
     #console.log("post" + req.connection.remoteAddress)
     sensors[req.body.transmitter_token] = req.body
-    console.log req.body
     io.sockets.emit 'live', req.body
     token = getTransToken req.body
     res.send(leds[token])
@@ -58,6 +61,12 @@ io.sockets.on 'connection', (socket) ->
   socket.on 'get_leds', (data) ->
     console.log("GET LEDS")
     socket.emit 'leds', leds
+
+  socket.on 'record_value', (data) ->
+    console.log("record value")
+    console.log data
+
+    sendToRails(data.transmitter_token, data.pin_name)
 
   socket.on 'led', (data) ->
     transToken = getTransToken(data)
