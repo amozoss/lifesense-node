@@ -14,4 +14,4 @@ $ npm install
 $ node public/server.js
 ```
 
-Note: The node server sends/receives updates from [lifesense](https://github.com/amozoss/lifesense).
+Note: The node server sends/receives updates from [lifesense](https://github.com/amozoss/lifesense) and [lifesense-pcb-software](https://github.com/amozoss/lifesense-pcb-software).
